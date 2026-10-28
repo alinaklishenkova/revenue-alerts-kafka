@@ -1,0 +1,38 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'ru.netology.dsw'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.apache.kafka:kafka-streams:2.8.0'
+    implementation 'org.apache.avro:avro:1.10.2'
+    implementation 'org.slf4j:slf4j-log4j12:1.7.32'
+
+    testImplementation 'org.apache.kafka:kafka-streams-test-utils:2.8.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
+    testImplementation 'org.hamcrest:hamcrest:2.2'
+}
+
+application {
+    mainClass = 'ru.netology.dsw.dsl.RevenueAlertsApp'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        showStackTraces = true
+        exceptionFormat = 'full'
+        events "PASSED", "FAILED"
+    }
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
