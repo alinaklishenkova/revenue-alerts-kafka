@@ -24,7 +24,6 @@ public class RevenueAlertsApp {
     public static final String RESULT_TOPIC = "product_revenue_alerts-dsl";
     private static final double MAX_REVENUE_PER_MINUTE = 3_000.0;
 
-    // Схемы из .avsc (namespace ksql)
     private static final Schema PURCHASE_SCHEMA = new Schema.Parser().parse("{\n" +
             "  \"namespace\": \"ksql\",\n" +
             "  \"name\": \"purchase\",\n" +
@@ -83,7 +82,6 @@ public class RevenueAlertsApp {
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "RevenueAlertsAppDSL-v3");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.STATE_DIR_CONFIG, "states");
-        // для нового consumer group — читаем с начала, чтобы не пропустить данные
         props.put(StreamsConfig.consumerPrefix("auto.offset.reset"), "earliest");
         return props;
     }
@@ -91,23 +89,19 @@ public class RevenueAlertsApp {
     public static Topology buildTopology() {
         var builder = new StreamsBuilder();
 
-        // Serde для Avro на основе известных схем
         var purchaseSerde = new AvroSerde(PURCHASE_SCHEMA);
         var productSerde = new AvroSerde(PRODUCT_SCHEMA);
 
-        // Поток покупок
         var purchasesStream = builder.stream(
                 PURCHASE_TOPIC_NAME,
                 Consumed.with(new Serdes.StringSerde(), purchaseSerde)
         );
 
-        // GlobalKTable продуктов
         var productsTable = builder.globalTable(
                 PRODUCT_TOPIC_NAME,
                 Consumed.with(new Serdes.StringSerde(), productSerde)
         );
 
-        // Обогащаем: revenue = quantity * price
         var enriched = purchasesStream
                 .selectKey((key, purchase) -> purchase.get("productid").toString())
                 .leftJoin(
@@ -141,7 +135,6 @@ public class RevenueAlertsApp {
         return builder.build();
     }
 
-    // Схема алерта — вынесена в поле, чтобы её же использовать в Serde
     private static final Schema ALERT_SCHEMA = SchemaBuilder.record("RevenueAlert").namespace("ru.netology.dsw.dsl").fields()
             .name("window_start")
             .type(LogicalTypes.timestampMillis().addToSchema(Schema.create(Schema.Type.LONG)))

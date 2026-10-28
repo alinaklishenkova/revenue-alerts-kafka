@@ -12,11 +12,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
-/**
- * Простой Avro Serde для GenericRecord.
- * Использует Avro-схему, которая передаётся в конструктор.
- * Зависит только от org.apache.avro:avro (Maven Central).
- */
+
 public class AvroSerde implements Serde<GenericRecord> {
 
     private final org.apache.avro.Schema schema;
